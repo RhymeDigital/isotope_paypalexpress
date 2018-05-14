@@ -14,4 +14,5 @@ define('TL_SCRIPT', 'create_payment.php');
 define('TL_MODE', 'FE');
 require __DIR__ . '/../../../initialize.php';
 
-echo \Rhyme\Helper\PayPalExpressHelper::createPayment();
+$objModel = \Rhyme\Helper\PayPalExpressHelper::getPaymentModule();
+echo $objModel !== null ? $objModel->createPayment() : '{}';

@@ -14,7 +14,8 @@
 /**
  * Palettes
  */
-$GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypalexpress'] = $GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypal'];
+$GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypalexpress'] = str_replace(array(',paypal_account;', ), array(',paypalClientId,paypalSecret;{template_legend},customTpl,paypalJsTpl;'), $GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypal']);
+
 
 /**
  * Fields
@@ -28,4 +29,42 @@ $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['allowed_cc_types'] = array
     'options_callback'      => array('Rhyme\Backend\Payment\GetCCTypes', 'run'),
     'eval'                  => array('multiple'=>true, 'tl_class'=>'clr'),
     'sql'                   => "text NULL",
+);
+
+$GLOBALS['TL_DCA']['tl_iso_payment']['fields']['customTpl'] = $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['customTpl'] ?: array
+(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_iso_payment']['customTpl'],
+    'exclude'                 => true,
+    'inputType'               => 'select',
+    'options_callback'        => array('Rhyme\Backend\Payment\Callbacks', 'getCustomTemplates'),
+    'eval'                    => array('tl_class'=>'w50', 'includeBlankOption'=>true),
+    'sql'                     => "varchar(128) NOT NULL default ''"
+);
+
+$GLOBALS['TL_DCA']['tl_iso_payment']['fields']['paypalJsTpl'] = array
+(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_iso_payment']['paypalJsTpl'],
+    'exclude'                 => true,
+    'inputType'               => 'select',
+    'options_callback'        => array('Rhyme\Backend\Payment\Callbacks', 'getPayPalExpressJsTemplates'),
+    'eval'                    => array('tl_class'=>'w50', 'includeBlankOption'=>true),
+    'sql'                     => "varchar(128) NOT NULL default ''"
+);
+
+$GLOBALS['TL_DCA']['tl_iso_payment']['fields']['paypalClientId'] = array
+(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_iso_payment']['paypalClientId'],
+    'exclude'                 => true,
+    'inputType'               => 'text',
+    'eval'                    => array('tl_class'=>'w50', 'mandatory'=>true),
+    'sql'                     => "varchar(255) NOT NULL default ''"
+);
+
+$GLOBALS['TL_DCA']['tl_iso_payment']['fields']['paypalSecret'] = array
+(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_iso_payment']['paypalSecret'],
+    'exclude'                 => true,
+    'inputType'               => 'text',
+    'eval'                    => array('tl_class'=>'w50', 'mandatory'=>true),
+    'sql'                     => "varchar(255) NOT NULL default ''"
 );
