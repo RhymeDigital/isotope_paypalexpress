@@ -1,0 +1,18 @@
+<script>
+  (function($) {
+    window.addEvent('domready', function() {
+      var toggleDiv = document.id('payment_paypalpayflowpro');
+      toggleDiv.hide();
+      var allRadios =  $$('input[name=<?php echo $this->fieldname; ?>]');
+      var initialValue = $$('input[name=<?php echo $this->fieldname; ?>]:checked');
+      var radioWithValue = $$('input[name=<?php echo $this->fieldname; ?>][value=<?php echo $this->moduleid; ?>]')[0];
+      if(initialValue.length && initialValue[0].get('value')==<?php echo $this->moduleid; ?>) {
+          toggleDiv.show();
+      }
+      allRadios.addEvent('click', function(e){
+          if(e.target==radioWithValue){ toggleDiv.show(); }
+          else{ toggleDiv.hide(); }
+      });
+    });
+  })(document.id);
+</script>

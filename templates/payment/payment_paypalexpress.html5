@@ -1,0 +1,3 @@
+<div id="payment_paypalexpress_<?= $this->id; ?>">
+    <div id="paypal-button-container<?= $this->id; ?>"></div>
+</div>

@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * Paypal Express for Iotope eCommerce
+ *
+ * Copyright (C) 2009-2018 Rhyme.Digital
+ *
+ * @package    IsotopePayPalExpress
+ * @link       http://rhyme.digital
+ * @license    http://opensource.org/licenses/lgpl-3.0.html
+ */
+
+
+/**
+ * Palettes
+ */
+$GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypalexpress'] = $GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypal'];
+
+/**
+ * Fields
+ */
+$GLOBALS['TL_DCA']['tl_iso_payment']['fields']['allowed_cc_types'] = array
+(
+    'label'                 => &$GLOBALS['TL_LANG']['tl_iso_payment']['allowed_cc_types'],
+    'exclude'               => true,
+    'filter'                => true,
+    'inputType'             => 'checkbox',
+    'options_callback'      => array('Rhyme\Backend\Payment\GetCCTypes', 'run'),
+    'eval'                  => array('multiple'=>true, 'tl_class'=>'clr'),
+    'sql'                   => "text NULL",
+);
