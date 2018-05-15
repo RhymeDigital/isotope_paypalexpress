@@ -40,7 +40,7 @@ class PayPalExpressHelper extends \Controller
         {
             // Todo: handle errors better
             $strErrMsg = 'Could not load payment method with ID "'.\Input::get('payment_mod').'"';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return null;
@@ -67,7 +67,7 @@ class PayPalExpressHelper extends \Controller
 
         // Todo: handle errors better
         $strErrMsg = 'Could not load current page (ID "'.\Input::get('payment_mod').'"")';
-        log_message($strErrMsg, 'debugPaypalExpress.log');
+        log_message($strErrMsg, 'debugPayPalExpress.log');
         \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
         return false;
