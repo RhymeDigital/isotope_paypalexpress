@@ -14,7 +14,7 @@
 /**
  * Fields
  */
-$GLOBALS['TL_DCA']['tl_iso_product_collection']['fields']['ipn_track_id'] = array
+$GLOBALS['TL_DCA']['tl_iso_product_collection']['fields']['paypal_payment_id'] = array
 (
-    'sql'   => "varchar(255) NOT NULL default ''"
+    'sql'   => "varchar(64) NOT NULL default ''"
 );
