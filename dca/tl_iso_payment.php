@@ -14,7 +14,7 @@
 /**
  * Palettes
  */
-$GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypalexpress'] = str_replace(array(',paypal_account;', ), array(',paypalClientId,paypalSecret;{template_legend},customTpl,paypalJsTpl;'), $GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypal']);
+$GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypalexpress'] = str_replace(array(',paypal_account;'), array(',paypalClientId,paypalSecret;{template_legend},customTpl,paypalJsTpl,paypalPaymentPrompt;'), $GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['paypal']);
 
 
 /**
@@ -67,4 +67,14 @@ $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['paypalSecret'] = array
     'inputType'               => 'text',
     'eval'                    => array('tl_class'=>'w50', 'mandatory'=>true),
     'sql'                     => "varchar(255) NOT NULL default ''"
+);
+
+$GLOBALS['TL_DCA']['tl_iso_payment']['fields']['paypalPaymentPrompt'] = array
+(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_iso_payment']['paypalPaymentPrompt'],
+    'exclude'                 => true,
+    'search'                  => true,
+    'inputType'               => 'textarea',
+    'eval'                    => array('mandatory'=>false, 'rte'=>'tinyMCE', 'tl_class'=>'clr'),
+    'sql'                     => "text NULL",
 );

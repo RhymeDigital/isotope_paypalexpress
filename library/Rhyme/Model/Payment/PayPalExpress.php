@@ -23,7 +23,7 @@ use Isotope\Model\ProductCollection\Order;
 use Isotope\Model\Payment\Postsale;
 
 use Isotope\Model\Payment as PaymentModel;
-use Isotope\Model\ProductCollection\Order as OrderModel;
+use Isotope\Model\ProductCollection as ProductCollectionModel;
 
 
 /**
@@ -57,12 +57,15 @@ class PayPalExpress extends Payment implements IsotopePayment
      */
     public function processPayment(IsotopeProductCollection $objOrder, \Module $objModule)
     {
+        // See if the payment was approved
         if (!$objOrder->payment_data)
         {
             return false;
         }
 
-        $objPaymentData = json_decode(deserialize($objOrder->payment_data));
+        $arrPaymentData = deserialize($objOrder->payment_data, true);
+        $objPaymentData = json_decode($arrPaymentData[0]);
+
         if (!$objPaymentData || $objPaymentData->state != 'approved')
         {
             return false;
@@ -76,14 +79,37 @@ class PayPalExpress extends Payment implements IsotopePayment
 
 
     /**
-     * Return the PayPal form.
-     *
-     * @param \Module $objCheckoutModule
-     * @param IsotopeCheckoutStep $objPaymentStep
-     * @return string
+     * Return a html form for checkout or false
+     * @param   IsotopeProductCollection    $objOrder   The order being places
+     * @param   \Module                     $objModule  The checkout module instance
+     * @return  bool
      */
-    public function paymentForm(\Module $objCheckoutModule, IsotopeCheckoutStep $objPaymentStep)
+    public function checkoutForm(IsotopeProductCollection $objOrder, \Module $objModule)
     {
+        $objCart = Isotope::getCart();
+        if ($objCart === null)
+        {
+            // Todo: handle errors better
+            $strErrMsg = 'Could not load cart.';
+            log_message($strErrMsg, 'debugPaypalExpress.log');
+            \System::log($strErrMsg, __METHOD__, TL_ERROR);
+        }
+
+        // See if the payment was approved
+        if ($objCart->payment_data)
+        {
+            $arrPaymentData = deserialize($objCart->payment_data, true);
+            $objPaymentData = json_decode($arrPaymentData[0]);
+            if ($objPaymentData && $objPaymentData->state == 'approved')
+            {
+                // Make sure the order has the correct payment data
+                $objOrder->payment_data = $objCart->payment_data;
+                $objOrder->save();
+
+                return false;
+            }
+        }
+
         global $objPage;
 
         // Build JS template
@@ -95,7 +121,7 @@ class PayPalExpress extends Payment implements IsotopePayment
         $objTemplate->execute_url = 'http'.(\Environment::get('ssl') ? 's' : '').'://'.\Environment::get('host').'/system/modules/isotope_paypalexpress/scripts/execute_payment.php?payment_mod='.$this->id.'&page_id='.$objPage->id;
 
         $GLOBALS['TL_BODY']['paypal_express_js'.$this->id] = $objTemplate->parse();
-        
+
         // Build payment template
         $objTemplate = new \Isotope\Template($this->customTpl ?: 'payment_paypalexpress');
         $objTemplate->setData($this->row());
@@ -107,40 +133,13 @@ class PayPalExpress extends Payment implements IsotopePayment
 
 
     /**
-     * Return the checkout review information.
-     *
-     * Use this to return custom checkout information about this payment module.
-     * Example: parial information about the used credit card.
-     *
-     * @return string
-     */
-    public function checkoutReview()
-    {
-        // Todo: add review stuff
-	    return '';
-    }
-
-
-    /**
-     * Return a list of valid credit card types for this payment module
-     *
-     * @return array
-     * @deprecated Deprecated since 2.2, to be removed in 3.0. Create your own DCA field instead.
-     */
-    public static function getAllowedCCTypes()
-    {
-        return array('mc', 'visa', 'amex', 'discover', 'jcb', 'diners','maestro','solo');
-    }
-
-
-    /**
      * Set up a "payment" for PayPal Express
      * @return string
      */
     public function createPayment()
     {
-        $objOrder = Isotope::getCart();
-        if ($objOrder === null)
+        $objCart = Isotope::getCart();
+        if ($objCart === null)
         {
             // Todo: handle errors better
             $strErrMsg = 'Could not load cart.';
@@ -150,17 +149,11 @@ class PayPalExpress extends Payment implements IsotopePayment
             return '{}';
         }
 
-        $strCartId = $objOrder->id;
+        // Get the order
+        $objOrder = $objCart->getDraftOrder();
 
-        // Check to see if we can grab the order instead
-        $objCheck = OrderModel::findByPk(intval($objOrder->cart_id));
-        if ($objCheck !== null)
-        {
-            $objOrder = $objCheck;
-            $strCartId = $objOrder->id;
-        }
-
-        $objData = static::buildPayPalPaymentObject($objOrder, $strCartId);
+        // Build the PayPal payment object
+        $objData = static::buildPayPalPaymentObject($objOrder, $objOrder->id);
 
         // !HOOK: alter data before sending
         if (isset($GLOBALS['ISO_HOOKS']['paypalExpressCreatePayment']) && is_array($GLOBALS['ISO_HOOKS']['paypalExpressCreatePayment'])) {
@@ -204,6 +197,7 @@ class PayPalExpress extends Payment implements IsotopePayment
             // Todo: handle errors better
             $strErrMsg = 'Could not get payment from PayPal';
             log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($response, 'debugPaypalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -212,6 +206,8 @@ class PayPalExpress extends Payment implements IsotopePayment
         // Save the PayPal payment info
         $objOrder->paypal_payment_id = $objResponse->id;
         $objOrder->save();
+        $objCart->paypal_payment_id = $objResponse->id;
+        $objCart->save();
 
         return $response;
     }
@@ -222,8 +218,8 @@ class PayPalExpress extends Payment implements IsotopePayment
      */
     public function executePayment()
     {
-        $objOrder = Isotope::getCart();
-        if ($objOrder === null)
+        $objCart = Isotope::getCart();
+        if ($objCart === null)
         {
             // Todo: handle errors better
             $strErrMsg = 'Could not load cart.';
@@ -233,20 +229,13 @@ class PayPalExpress extends Payment implements IsotopePayment
             return '{}';
         }
 
-        $objOrder->setPaymentMethod($this);
-        $strCartId = $objOrder->id;
+        // Get the order
+        $objOrder = $objCart->getDraftOrder();
 
-        // Check to see if we can grab the order instead
-        $objCheck = OrderModel::findByPk(intval($objOrder->cart_id));
-        if ($objCheck !== null)
-        {
-            $objOrder = $objCheck;
-            $strCartId = $objOrder->id;
-            $objOrder->setPaymentMethod($this);
-        }
+        // Get the PayPal payment object
+        $objPayment = static::buildPayPalPaymentObject($objOrder, $objOrder->id);
 
-        $objPayment = static::buildPayPalPaymentObject($objOrder, $strCartId);
-
+        // Build the PayPal payment "execute" object
         $objData = new \stdClass();
         $objData->payer_id = $_POST['payerID'];
         $objPayment->transactions[0]->description = substr(strval($objPayment->transactions[0]->description), 0, 127);
@@ -294,6 +283,7 @@ class PayPalExpress extends Payment implements IsotopePayment
             // Todo: handle errors better
             $strErrMsg = 'Could not get payment from PayPal';
             log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($response, 'debugPaypalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -303,13 +293,17 @@ class PayPalExpress extends Payment implements IsotopePayment
             // Todo: handle errors better
             $strErrMsg = 'PayPal payment was not approved.';
             log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($response, 'debugPaypalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
         }
 
-        $objOrder->payment_data = serialize($response);
+        // Save the PayPal info
+        $objOrder->payment_data = serialize(array($response));
         $objOrder->save();
+        $objCart->payment_data = serialize(array($response));
+        $objCart->save();
 
         return $response;
     }
@@ -317,13 +311,13 @@ class PayPalExpress extends Payment implements IsotopePayment
 
     /**
      * Build the PayPal payment object
-     * @param $objOrder
-     * @param string $strCartId
+     * @param IsotopeProductCollection $objOrder
+     * @param string $strOrderId
      * @return \stdClass
      */
-    protected function buildPayPalPaymentObject($objOrder, $strCartId='')
+    protected function buildPayPalPaymentObject(IsotopeProductCollection $objOrder, $strOrderId='')
     {
-        $strCartId = $strCartId ?: ($objOrder->cart_id ?: $objOrder->id);
+        $strOrderId = $strOrderId ?: $objOrder->id;
 
         $objBillingAddress = $objOrder->getBillingAddress();
         $objShippingAddress = $objOrder->getShippingAddress();
@@ -331,7 +325,7 @@ class PayPalExpress extends Payment implements IsotopePayment
         $arrBillingSubdivision = explode('-', $objBillingAddress->subdivision);
         $arrShippingSubdivision = explode('-', $objShippingAddress->subdivision);
 
-        $strComments = 'CARTID:' . $strCartId;
+        $strComments = 'ORDERID:' . $strOrderId;
         $strComments .= ', BILLING ADDRESS:'. $objBillingAddress->firstname .' '. $objBillingAddress->lastname;
         $strComments .= ' '. $objBillingAddress->street_1 . ' ' . $objBillingAddress->street_2 . ' ' . $objBillingAddress->street_3;
         $strComments .= ' '. $objBillingAddress->city . ',  ' . $arrBillingSubdivision[1] . ' ' . $objBillingAddress->postal;
@@ -377,7 +371,27 @@ class PayPalExpress extends Payment implements IsotopePayment
         $objTransaction->amount->currency = Isotope::getConfig()->currency;
         $objTransaction->amount->details = new \stdClass();
         $objTransaction->amount->details->subtotal = strval($objOrder->subtotal);
-        // Todo: add shipping, tax, shipping_discount, etc.
+
+        // Add surcharges too
+        foreach ($objOrder->getSurcharges() as $objSurcharge)
+        {
+            if (!$objSurcharge->addToTotal)
+            {
+                continue;
+            }
+
+            // Todo: add more surcharge types (hook maybe?)
+            switch ($objSurcharge->type)
+            {
+                case 'shipping':
+                    $objTransaction->amount->details->shipping = strval($objSurcharge->total_price);
+                    break;
+
+                case 'tax':
+                    $objTransaction->amount->details->tax = strval($objSurcharge->total_price);
+                    break;
+            }
+        }
 
         // Item List
         $arrItems = array();
@@ -413,7 +427,59 @@ class PayPalExpress extends Payment implements IsotopePayment
         // Add transaction to array
         $objData->transactions = array($objTransaction);
 
+        // !HOOK: alter data if needed
+        if (isset($GLOBALS['ISO_HOOKS']['paypalExpressBuildPayment']) && is_array($GLOBALS['ISO_HOOKS']['paypalExpressBuildPayment'])) {
+            foreach ($GLOBALS['ISO_HOOKS']['paypalExpressBuildPayment'] as $callback) {
+                $objCallback = \System::importStatic($callback[0]);
+                $objCallback->{$callback[1]}($objData, $objOrder, $this);
+            }
+        }
+
         return $objData;
+    }
+
+
+    /**
+     * Return the PayPal form (used for XCheckout)
+     *
+     * @param \Module $objCheckoutModule
+     * @param IsotopeCheckoutStep $objPaymentStep
+     * @return string
+     */
+    public function paymentForm(\Module $objCheckoutModule, IsotopeCheckoutStep $objPaymentStep)
+    {
+        return '';
+        global $objPage;
+
+        // Build JS template
+        $objTemplate = new \Isotope\Template($this->paypalJsTpl ?: 'paypal_express_js_default');
+        $objTemplate->setData($this->row());
+
+        $objTemplate->current_page_id = $objPage->id;
+        $objTemplate->create_url = 'http'.(\Environment::get('ssl') ? 's' : '').'://'.\Environment::get('host').'/system/modules/isotope_paypalexpress/scripts/create_payment.php?payment_mod='.$this->id.'&page_id='.$objPage->id;
+        $objTemplate->execute_url = 'http'.(\Environment::get('ssl') ? 's' : '').'://'.\Environment::get('host').'/system/modules/isotope_paypalexpress/scripts/execute_payment.php?payment_mod='.$this->id.'&page_id='.$objPage->id;
+
+        $GLOBALS['TL_BODY']['paypal_express_js'.$this->id] = $objTemplate->parse();
+
+        // Build payment template
+        $objTemplate = new \Isotope\Template($this->customTpl ?: 'payment_paypalexpress');
+        $objTemplate->setData($this->row());
+
+        $objTemplate->current_page_id = $objPage->id;
+
+        return $objTemplate->parse();
+    }
+
+
+    /**
+     * Return a list of valid credit card types for this payment module
+     *
+     * @return array
+     * @deprecated Deprecated since 2.2, to be removed in 3.0. Create your own DCA field instead.
+     */
+    public static function getAllowedCCTypes()
+    {
+        return array('mc', 'visa', 'amex', 'discover', 'jcb', 'diners','maestro','solo');
     }
 
 

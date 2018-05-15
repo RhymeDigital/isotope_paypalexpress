@@ -1,3 +1,4 @@
 <div id="payment_paypalexpress_<?= $this->id; ?>">
+    <?= $this->paypalPaymentPrompt; ?>
     <div id="paypal-button-container<?= $this->id; ?>"></div>
 </div>
