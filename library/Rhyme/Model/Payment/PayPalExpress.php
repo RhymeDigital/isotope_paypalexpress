@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Paypal Express for Iotope eCommerce
+ * PayPal Express for Isotope eCommerce
  *
  * Copyright (C) 2009-2018 Rhyme.Digital
  *
@@ -91,7 +91,7 @@ class PayPalExpress extends Payment implements IsotopePayment
         {
             // Todo: handle errors better
             $strErrMsg = 'Could not load cart.';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
         }
 
@@ -143,7 +143,7 @@ class PayPalExpress extends Payment implements IsotopePayment
         {
             // Todo: handle errors better
             $strErrMsg = 'Could not load cart.';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -185,7 +185,7 @@ class PayPalExpress extends Payment implements IsotopePayment
         {
             // Todo: handle errors better
             $strErrMsg = 'Empty response from PayPal';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -196,8 +196,8 @@ class PayPalExpress extends Payment implements IsotopePayment
         {
             // Todo: handle errors better
             $strErrMsg = 'Could not get payment from PayPal';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
-            log_message($response, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
+            log_message($response, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -223,7 +223,7 @@ class PayPalExpress extends Payment implements IsotopePayment
         {
             // Todo: handle errors better
             $strErrMsg = 'Could not load cart.';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -271,7 +271,7 @@ class PayPalExpress extends Payment implements IsotopePayment
         {
             // Todo: handle errors better
             $strErrMsg = 'Empty response from PayPal';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -282,8 +282,8 @@ class PayPalExpress extends Payment implements IsotopePayment
         {
             // Todo: handle errors better
             $strErrMsg = 'Could not get payment from PayPal';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
-            log_message($response, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
+            log_message($response, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -292,8 +292,8 @@ class PayPalExpress extends Payment implements IsotopePayment
         {
             // Todo: handle errors better
             $strErrMsg = 'PayPal payment was not approved.';
-            log_message($strErrMsg, 'debugPaypalExpress.log');
-            log_message($response, 'debugPaypalExpress.log');
+            log_message($strErrMsg, 'debugPayPalExpress.log');
+            log_message($response, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -317,6 +317,8 @@ class PayPalExpress extends Payment implements IsotopePayment
      */
     protected function buildPayPalPaymentObject(IsotopeProductCollection $objOrder, $strOrderId='')
     {
+        global $objPage;
+
         $strOrderId = $strOrderId ?: $objOrder->id;
 
         $objBillingAddress = $objOrder->getBillingAddress();
@@ -352,8 +354,8 @@ class PayPalExpress extends Payment implements IsotopePayment
         // Redirect URLs
         $strUrlStart = 'http'.(\Environment::get('ssl') ? 's' : '').'://'.\Environment::get('host').'/system/modules/isotope_paypalexpress/scripts/';
         $objData->redirect_urls = new \stdClass();
-        $objData->redirect_urls->return_url = $strUrlStart.'return_url.php';
-        $objData->redirect_urls->cancel_url = $strUrlStart.'cancel_url.php';
+        $objData->redirect_urls->return_url = $strUrlStart.'return_payment.php?payment_mod='.$this->id.'&page_id='.$objPage->id;
+        $objData->redirect_urls->cancel_url = $strUrlStart.'cancel_payment.php?payment_mod='.$this->id.'&page_id='.$objPage->id;
 
         // Payer
         $objData->payer = new \stdClass();
@@ -436,6 +438,24 @@ class PayPalExpress extends Payment implements IsotopePayment
         }
 
         return $objData;
+    }
+
+
+    /**
+     * Cancel a "payment" for PayPal Express
+     */
+    public function cancelPayment()
+    {
+
+    }
+
+
+    /**
+     * Return a "payment" for PayPal Express
+     */
+    public function returnPayment()
+    {
+
     }
 
 

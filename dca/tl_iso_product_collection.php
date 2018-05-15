@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Paypal Express for Iotope eCommerce
+ * PayPal Express for Isotope eCommerce
  *
  * Copyright (C) 2009-2018 Rhyme.Digital
  *
