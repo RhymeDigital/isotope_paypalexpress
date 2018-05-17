@@ -186,6 +186,8 @@ class PayPalExpress extends Payment implements IsotopePayment
             // Todo: handle errors better
             $strErrMsg = 'Empty response from PayPal';
             log_message($strErrMsg, 'debugPayPalExpress.log');
+            log_message('Cart ID: '.$objCart->id, 'debugPayPalExpress.log');
+            log_message('Order ID: '.$objOrder->id, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -197,6 +199,8 @@ class PayPalExpress extends Payment implements IsotopePayment
             // Todo: handle errors better
             $strErrMsg = 'Could not get payment from PayPal';
             log_message($strErrMsg, 'debugPayPalExpress.log');
+            log_message('Cart ID: '.$objCart->id, 'debugPayPalExpress.log');
+            log_message('Order ID: '.$objOrder->id, 'debugPayPalExpress.log');
             log_message($response, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
@@ -272,6 +276,8 @@ class PayPalExpress extends Payment implements IsotopePayment
             // Todo: handle errors better
             $strErrMsg = 'Empty response from PayPal';
             log_message($strErrMsg, 'debugPayPalExpress.log');
+            log_message('Cart ID: '.$objCart->id, 'debugPayPalExpress.log');
+            log_message('Order ID: '.$objOrder->id, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
             return '{}';
@@ -283,6 +289,8 @@ class PayPalExpress extends Payment implements IsotopePayment
             // Todo: handle errors better
             $strErrMsg = 'Could not get payment from PayPal';
             log_message($strErrMsg, 'debugPayPalExpress.log');
+            log_message('Cart ID: '.$objCart->id, 'debugPayPalExpress.log');
+            log_message('Order ID: '.$objOrder->id, 'debugPayPalExpress.log');
             log_message($response, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
@@ -293,6 +301,8 @@ class PayPalExpress extends Payment implements IsotopePayment
             // Todo: handle errors better
             $strErrMsg = 'PayPal payment was not approved.';
             log_message($strErrMsg, 'debugPayPalExpress.log');
+            log_message('Cart ID: '.$objCart->id, 'debugPayPalExpress.log');
+            log_message('Order ID: '.$objOrder->id, 'debugPayPalExpress.log');
             log_message($response, 'debugPayPalExpress.log');
             \System::log($strErrMsg, __METHOD__, TL_ERROR);
 
