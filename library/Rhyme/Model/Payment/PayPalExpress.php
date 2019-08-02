@@ -416,7 +416,8 @@ class PayPalExpress extends Payment implements IsotopePayment
             $objLineItem->name = html_entity_decode($objItem->name);
             $objLineItem->price = $objItem->price;
             $objLineItem->currency = Isotope::getConfig()->currency;
-            $objLineItem->tax = $objItem->tax_id ? '1': '0';
+            $objLineItem->tax = '0';
+            //$objLineItem->tax = $objItem->tax_id ? '1': '0'; // Todo: this is incorrect, figure out when to use this
 
             $strDesc = '';
             $arrOptions = $objItem->getConfiguration();
